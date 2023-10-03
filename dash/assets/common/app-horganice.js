@@ -1,0 +1,425 @@
+const pathApi = "../assets/json/data_horganice.json";
+const itemsPerPage = 10;
+let data = [];
+let totalPages = 0;
+let currentPage = 1;
+
+async function fetchData() {
+  try {
+    const response = await fetch(pathApi);
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
+    data = await response.json();
+    totalPages = Math.ceil(data.length / itemsPerPage);
+    displayDataInTable(currentPage);
+    displayPageNumbers();
+    sumTotalEngagement();
+    // sumTotalPrint();
+    sumTotalHashtag();
+    sumTotalPost();
+    topFive();
+
+    const loader = document.querySelector(".loader");
+    loader.classList.add("loader--hidden");
+  } catch (error) {
+    console.error("There was a problem with the fetch operation:", error);
+  }
+}
+
+// ==========================================================================================================================
+// Data all total
+
+function sumTotalEngagement() {
+  const totalEngagement = data.reduce(
+    (total, item) => total + item.total_engagement,
+    0
+  );
+
+  let formattedTotalEngagement = totalEngagement;
+  if (totalEngagement >= 1000) {
+    formattedTotalEngagement = (totalEngagement / 1000).toFixed(1) + "k";
+  }
+
+  const totalEngagementHTML = document.getElementById("total-engagement");
+
+  totalEngagementHTML.innerHTML = formattedTotalEngagement;
+}
+
+// function sumTotalPrint() {
+//   const totalPrint = data.reduce((total, item) => total + item.print_out, 0);
+
+//   let formattedTotalPrint = totalPrint;
+//   if (totalPrint >= 1000) {
+//     formattedTotalPrint = (totalPrint / 1000).toFixed(1) + "k";
+//   }
+
+//   const totalPrintHTML = document.getElementById("total-print");
+//   totalPrintHTML.innerHTML = formattedTotalPrint;
+// }
+
+function sumTotalHashtag() {
+  const countHashtag = data.length;
+  let formattedTotalHashtag = countHashtag;
+  if (countHashtag >= 1000) {
+    formattedTotalHashtag = (countHashtag / 1000).toFixed(1) + "k";
+  }
+
+  const totalHashtag = document.getElementById("total-hashtag");
+  totalHashtag.innerHTML = formattedTotalHashtag;
+}
+
+function sumTotalPost() {
+  const countPost = data.length;
+  let formattedTotalPost = countPost;
+  if (countPost >= 1000) {
+    formattedTotalPost = (countPost / 1000).toFixed(1) + "k";
+  }
+
+  const totalPost = document.getElementById("total-post");
+  totalPost.innerHTML = formattedTotalPost;
+}
+
+// ==========================================================================================================================
+// Top5
+
+function topFive() {
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    console.log("ไม่มีข้อมูล JSON หรือข้อมูลไม่ถูกต้อง");
+    return;
+  }
+
+  const fiveItems = data.slice(0, 5);
+  const showTopFive = document.getElementById("topFiveEngagement");
+  let topFiveHTML = "";
+
+  fiveItems.forEach((item, index) => {
+    topFiveHTML += `<div class="card-content">`;
+    topFiveHTML += `
+    <div class="d-flex align-items-start justify-content-between mb-2">
+    <div class="flex-shrink-0">
+    <img src="../assets/img/icons/unicons/Ellipse-16.svg" alt="Credit Card" class="img-profile-bg" />`;
+    for (let i = 1; i <= index + 1; i++) {
+      topFiveHTML += `
+      <img src="../assets/img/avatars/horganice/top-${i}.jpg" alt="Credit Card" class="img-profile" />
+      `;
+    }
+    topFiveHTML += `</div>`;
+    topFiveHTML += `
+    <div class="box-title">
+    <h4 class="card-title text-nowrap top5-name">${item.full_name}</h4>
+    <div class="">`;
+    if (item.channel == "Instagram") {
+      topFiveHTML += `<span class="badge bg-label-ig me-1">${item.channel}</span>`;
+    } else {
+      topFiveHTML += `<span class="badge bg-label-fa me-1">${item.channel}</span>`;
+    }
+    topFiveHTML += `<span class="top5-date"> ${item.date}</span></div></div></div>`;
+    topFiveHTML += `
+    <div class="box-total-eg">
+    <div class="card bg-reaction-y">
+      <div class="card-total-eg-y">
+        <div class="text-nowrap title-eg">Reaction</div>
+        <div class="text-nowrap num-total-eg color-reaction-y">${item.reaction}</div>
+      </div>
+    </div>`;
+    topFiveHTML += `
+    <div class="card bg-comment-o">
+      <div class="card-total-eg-o">
+        <div class="text-nowrap title-eg">Comment</div>
+        <div class="text-nowrap num-total-eg color-comment-o">${item.comment}</div>
+      </div>
+    </div>`;
+    topFiveHTML += `
+    <div class="card bg-share-g">
+          <div class="card-total-eg-g">
+            <div class="text-nowrap title-eg">Share</div>
+            <div class="text-nowrap num-total-eg color-share-g">${item.share}</div>
+          </div>
+        </div>
+      </div>`;
+    topFiveHTML += `
+    <div class="row">
+        <div class="col-lg-12 -col-md-12 col-12">
+          <div class="card bg-total-eg-b mt-2">
+            <div class="card-total-eg-b">
+              <div class="text-nowrap title-eg">Total Engagement</div>
+              <div class="text-nowrap num-total-eg color-total-eg-b">${item.total_engagement}</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    topFiveHTML += `
+    <div class="box-contant-eg">
+    <div class="box-conntant">
+      <div class="text-nowrap contant-caption">Caption</div>
+      <div class="text-nowrap contant-caption-sub">${item.caption}</div>
+    </div>
+
+    <div class="box-link">
+      <div class="text-nowrap contant-link">Post URL</div>
+      <a href="${item.post_url}" target="_blank">
+        <div class="text-nowrap contant-link-sub">${item.post_url}</div>
+      </a>
+    </div>
+  </div>
+      `;
+    topFiveHTML += `</div>`;
+  });
+  showTopFive.innerHTML = topFiveHTML;
+}
+
+// ==========================================================================================================================
+// Data Table
+
+function displayDataInTable(page) {
+  const table = document.getElementById("dataTable");
+  const tbody = document.getElementById("tableBody");
+  const prevBtn = document.getElementById("prevBtn");
+  const nextBtn = document.getElementById("nextBtn");
+
+  tbody.innerHTML = "";
+
+  const startIndex = (page - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, data.length);
+
+  for (let i = startIndex; i < endIndex; i++) {
+    const item = data[i];
+    let resultRows = "";
+
+    resultRows += `<tr>`;
+    resultRows +=
+      `<td class="td-name td-h"><span class="text-limit-2-row">` +
+      `${item.full_name}` +
+      `</span></td>`;
+    if (item.channel == "Instagram") {
+      resultRows +=
+        `<td><span class="badge bg-label-ig me-1">` +
+        `${item.channel}` +
+        `</span></td>`;
+    } else {
+      resultRows +=
+        `<td><span class="badge bg-label-fa me-1">` +
+        `${item.channel}` +
+        `</span></td>`;
+    }
+    resultRows +=
+      `<td class="td-text td-h"><span class="text-limit-2-row">` +
+      `${item.caption}` +
+      `</span></td>`;
+    resultRows +=
+      `<td class="font-12 text-center td-h">` + `${item.date}` + `</td>`;
+    resultRows += `<td class="td-text td-h">` + `${item.reaction}` + `</td>`;
+    resultRows += `<td class="td-text td-h">` + `${item.comment}` + `</td>`;
+    resultRows += `<td class="td-text td-h">` + `${item.share}` + `</td>`;
+    resultRows +=
+      `<td class="td-text td-h">` + `${item.total_engagement}` + `</td>`;
+    resultRows += `<td class="text-center td-h">`;
+    resultRows +=
+      `<a href="` +
+      `${item.post_url}` +
+      `" target="_blank" class="td-text-link"><span class="text-limit-2-row width-url">` +
+      `${item.post_url}` +
+      `</span></a>`;
+    resultRows += `</td>`;
+    resultRows += `</tr>`;
+
+    tbody.insertAdjacentHTML("beforeend", resultRows);
+  }
+
+  if (prevBtn && nextBtn) {
+    prevBtn.disabled = page === 1;
+    nextBtn.disabled = page === totalPages;
+  }
+}
+
+function displayPageNumbers() {
+  const pageNumbersContainer = document.getElementById("pageNumbers");
+  pageNumbersContainer.innerHTML = "";
+
+  const prevPageItemHTML = `
+    <li class="page-item prev page-hover">
+      <a class="page-link border-radius" href="javascript:void(0);" onclick="prevPage()"><i class="tf-icon bx bx-chevron-left"></i></a>
+    </li>
+  `;
+  pageNumbersContainer.insertAdjacentHTML("beforeend", prevPageItemHTML);
+
+  const maxVisiblePages = 3; // กำหนดจำนวนหน้าที่ต้องการให้แสดง
+  let startPage, endPage;
+
+  if (totalPages <= maxVisiblePages) {
+    startPage = 1;
+    endPage = totalPages;
+  } else {
+    if (currentPage <= 2) {
+      startPage = 1;
+      endPage = maxVisiblePages;
+    } else if (currentPage + 1 >= totalPages) {
+      startPage = totalPages - maxVisiblePages + 1;
+      endPage = totalPages;
+    } else {
+      startPage = currentPage - 1;
+      endPage = currentPage + 1;
+    }
+  }
+
+  if (startPage > 1) {
+    // แสดงหน้าแรก
+    const firstPageItemHTML = `
+      <li class="page-item page-hover">
+        <a class="page-link border-radius" href="javascript:void(0);" onclick="goToPage(1)">1</a>
+      </li>
+    `;
+    pageNumbersContainer.insertAdjacentHTML("beforeend", firstPageItemHTML);
+
+    // แสดง ... เมื่อหน้าแรกไม่ได้แสดง
+    if (startPage > 2) {
+      const ellipsisItemHTML = `
+        <li class="page-item page-hover">
+          <a class="page-link border-radius" href="javascript:void(0);">...</a>
+        </li>
+      `;
+      pageNumbersContainer.insertAdjacentHTML("beforeend", ellipsisItemHTML);
+    }
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    const pageNumberItemHTML = `
+      <li class="page-item ${i === currentPage ? "active" : ""} page-hover">
+        <a class="page-link border-radius" href="javascript:void(0);" onclick="goToPage(${i})">${i}</a>
+      </li>
+    `;
+    pageNumbersContainer.insertAdjacentHTML("beforeend", pageNumberItemHTML);
+  }
+
+  if (endPage < totalPages) {
+    // แสดง ... เมื่อหน้าสุดท้ายไม่ได้แสดง
+    if (endPage < totalPages - 1) {
+      const ellipsisItemHTML = `
+        <li class="page-item page-hover">
+          <a class="page-link border-radius" href="javascript:void(0);">...</a>
+        </li>
+      `;
+      pageNumbersContainer.insertAdjacentHTML("beforeend", ellipsisItemHTML);
+    }
+
+    // แสดงหน้าสุดท้าย
+    const lastPageItemHTML = `
+      <li class="page-item page-hover">
+        <a class="page-link border-radius" href="javascript:void(0);" onclick="goToPage(${totalPages})">${totalPages}</a>
+      </li>
+    `;
+    pageNumbersContainer.insertAdjacentHTML("beforeend", lastPageItemHTML);
+  }
+
+  const nextPageItemHTML = `
+    <li class="page-item next page-hover">
+      <a class="page-link border-radius" href="javascript:void(0);" onclick="nextPage()"><i class="tf-icon bx bx-chevron-right"></i></a>
+    </li>
+  `;
+  pageNumbersContainer.insertAdjacentHTML("beforeend", nextPageItemHTML);
+}
+
+function goToPage(page) {
+  currentPage = page;
+  displayDataInTable(currentPage);
+  displayPageNumbers();
+}
+
+function prevPage() {
+  if (currentPage > 1) {
+    currentPage--;
+    displayDataInTable(currentPage);
+    displayPageNumbers();
+  }
+}
+
+function nextPage() {
+  if (currentPage < totalPages) {
+    currentPage++;
+    displayDataInTable(currentPage);
+    displayPageNumbers();
+  }
+}
+
+// Order Statistics Chart
+// --------------------------------------------------------------------
+
+const chartOrderStatistics = document.querySelector("#theZocialChart"),
+  orderChartConfig = {
+    chart: {
+      height: "280px",
+      width: "100%",
+      type: "donut",
+    },
+    labels: ["Facebook", "Instagram"],
+    series: [29, 1],
+    colors: [config.colors.facebook, config.colors.instagram],
+    stroke: {
+      width: 5,
+      colors: config.colors.white,
+    },
+    dataLabels: {
+      enabled: false,
+      formatter: function (val, opt) {
+        return parseInt(val) + "K";
+      },
+    },
+    legend: {
+      show: false,
+    },
+    grid: {
+      padding: {
+        top: 0,
+        bottom: 0,
+        right: 15,
+      },
+    },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: "80%",
+          labels: {
+            show: true,
+            value: {
+              fontSize: "22px",
+              fontWeight: "700",
+              color: "#353535",
+              offsetY: -15,
+              formatter: function (val) {
+                return parseInt(val) + "";
+              },
+            },
+            name: {
+              offsetY: 20,
+            },
+            total: {
+              show: true,
+              fontSize: "13px",
+              color: "#797979",
+              width: "auto",
+              label: "Click to view percentage",
+              formatter: function (w) {
+                w = "Channel";
+                return w;
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+if (
+  typeof chartOrderStatistics !== undefined &&
+  chartOrderStatistics !== null
+) {
+  const statisticsChart = new ApexCharts(
+    chartOrderStatistics,
+    orderChartConfig
+  );
+  statisticsChart.render();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  fetchData();
+});
